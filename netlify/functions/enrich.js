@@ -43,6 +43,18 @@ function normConf(value) {
   return Math.round(Math.max(0, Math.min(100, n)));
 }
 
+/**
+ * Netlify env values are sometimes pasted as `Bearer hm_prod_…` or with quotes.
+ * LeadIQ expects `Authorization: Bearer <raw token>` once — duplicate Bearer breaks auth (401).
+ */
+function sanitizeLeadIQBearerToken(raw) {
+  let t = String(raw == null ? "" : raw).trim();
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+    t = t.slice(1, -1).trim();
+  }
+  return t.replace(/^Bearer\s+/i, "").trim();
+}
+
 function hunterErrorMessage(data) {
   if (!data || !data.errors || !data.errors.length) return "";
   const e0 = data.errors[0];
@@ -174,9 +186,13 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
     const body = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const msg =
+      let msg =
         (Array.isArray(body.errors) && body.errors.map((e) => e.message || e.detail).join("; ")) ||
         `HTTP ${response.status}`;
+      if (response.status === 401) {
+        msg +=
+          " — Check Netlify env LEADIQ_API_KEY: use the raw API token only (do not include the word “Bearer”). Regenerate the token in LeadIQ if it was rotated or expired.";
+      }
       return { ...empty, error: msg };
     }
     if (Array.isArray(body.errors) && body.errors.length) {
@@ -233,8 +249,8 @@ exports.handler = async (event) => {
     });
   }
 
-  const hunterKey = process.env.HUNTER_API_KEY || "";
-  const leadiqKey = process.env.LEADIQ_API_KEY || "";
+  const hunterKey = (process.env.HUNTER_API_KEY || "").trim();
+  const leadiqKey = sanitizeLeadIQBearerToken(process.env.LEADIQ_API_KEY || "");
 
   const [hunter, leadiq] = await Promise.all([
     lookupHunter(firstName, lastName, companyName, hunterKey),
