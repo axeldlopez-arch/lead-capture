@@ -67,15 +67,30 @@ function normConf(value) {
 }
 
 /**
- * Netlify env values are sometimes pasted as `Bearer hm_prod_…` or with quotes.
+ * Netlify env values are sometimes pasted as `Bearer …`, with quotes, newlines, or BOM.
  * LeadIQ expects `Authorization: Bearer <raw token>` once — duplicate Bearer breaks auth (401).
  */
 function sanitizeLeadIQBearerToken(raw) {
   let t = String(raw == null ? "" : raw).trim();
+  t = t.replace(/^\uFEFF/, "");
+  t = t.replace(/\r?\n/g, " ").replace(/\s+/g, " ").trim();
   if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
     t = t.slice(1, -1).trim();
   }
-  return t.replace(/^Bearer\s+/i, "").trim();
+  while (/^Bearer\s+/i.test(t)) {
+    t = t.replace(/^Bearer\s+/i, "").trim();
+  }
+  return t;
+}
+
+/** LeadIQ may return errors in GraphQL `errors[]`, a top-level `message`, or both. */
+function extractLeadIQErrorMessage(body) {
+  if (!body || typeof body !== "object") return "";
+  const fromArr = Array.isArray(body.errors) && body.errors.length
+    ? body.errors.map((e) => (e && (e.message || e.detail || e.extensions?.message)) || "").filter(Boolean).join("; ")
+    : "";
+  const top = typeof body.message === "string" && body.message.trim() ? body.message.trim() : "";
+  return [fromArr, top].filter(Boolean).join("; ");
 }
 
 function hunterErrorMessage(data) {
@@ -153,7 +168,12 @@ async function lookupHunter(firstName, lastName, companyName, apiKey) {
     const d = ef.body?.data || {};
     const email = d.email || "";
     if (!email) {
-      return { ...empty, confidence: normConf(d.score), error: "No email from Hunter" };
+      const domainHint = domain ? ` at ${domain}` : "";
+      return {
+        ...empty,
+        confidence: normConf(d.score),
+        error: `No email from Hunter — domain was found${domainHint}, but Email Finder returned no address for "${firstName} ${lastName}". Try exact name spelling or a different company string; Hunter may simply have no record.`,
+      };
     }
     return {
       email,
@@ -226,19 +246,19 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
     });
 
     if (!response.ok) {
-      let msg =
-        (Array.isArray(body.errors) && body.errors.map((e) => e.message || e.detail).join("; ")) ||
-        `HTTP ${response.status}`;
+      const extracted = extractLeadIQErrorMessage(body);
+      let msg = extracted || `HTTP ${response.status}`;
       if (response.status === 401) {
         msg +=
-          " — Check Netlify env LEADIQ_API_KEY: use the raw API token only (do not include the word “Bearer”). Regenerate the token in LeadIQ if it was rotated or expired.";
+          " — LeadIQ rejected this token (401). In LeadIQ Developer / Public API settings, create a new API token, set Netlify env LEADIQ_API_KEY to the token only (no “Bearer ” prefix, no quotes, no line breaks), save, then trigger a new deploy so functions pick up the value.";
       }
       return { ...empty, error: msg };
     }
     if (Array.isArray(body.errors) && body.errors.length) {
+      const graphqlErr = extractLeadIQErrorMessage(body);
       return {
         ...empty,
-        error: body.errors.map((e) => e.message || String(e)).join("; "),
+        error: graphqlErr || "LeadIQ GraphQL returned errors",
       };
     }
     const results = body?.data?.searchPeople?.results || [];
@@ -292,6 +312,12 @@ exports.handler = async (event) => {
 
   const hunterKey = (process.env.HUNTER_API_KEY || "").trim();
   const leadiqKey = sanitizeLeadIQBearerToken(process.env.LEADIQ_API_KEY || "");
+  console.log(
+    "enrich: LeadIQ token after sanitize — present:",
+    !!leadiqKey,
+    "length:",
+    leadiqKey ? leadiqKey.length : 0
+  );
 
   console.log("enrich: starting Hunter, then LeadIQ (sequential)");
 
