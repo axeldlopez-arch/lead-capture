@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+  command = "npm install"
+
+[[redirects]]
+  from = "/api/enrich"
+  to = "/.netlify/functions/enrich"
+  status = 200

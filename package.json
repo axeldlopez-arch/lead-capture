@@ -1,0 +1,8 @@
+{
+  "name": "lead-capture-netlify",
+  "private": true,
+  "description": "Netlify Functions for Hunter.io + LeadIQ (used by leadcapture.html)",
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}

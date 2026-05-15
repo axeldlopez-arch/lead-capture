@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lead Capture</title>
+    <style>
+      :root {
+        --klarna-off-white: #f9f8f5;
+        --klarna-pink: #ffb3c7;
+        --klarna-pink-hover: #ff9ebb;
+        --klarna-black: #0b051d;
+        --klarna-white: #ffffff;
+        --border: rgba(11, 5, 29, 0.08);
+        --muted: rgba(11, 5, 29, 0.55);
+        --shadow: 0 2px 8px rgba(11, 5, 29, 0.06), 0 12px 40px rgba(11, 5, 29, 0.04);
+        --radius-card: 16px;
+        --conf-green: #00a67e;
+        --conf-amber: #f5a623;
+        --conf-red: #e2001a;
+        font-family: "Klarna Text", "Klarna Headline", system-ui, -apple-system, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--klarna-off-white);
+        color: var(--klarna-black);
+        font-family: "Klarna Text", "Klarna Headline", system-ui, -apple-system, sans-serif;
+        font-weight: 400;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .site-header {
+        background: var(--klarna-white);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .site-header-inner {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .site-header img {
+        display: block;
+        height: 32px;
+        width: auto;
+      }
+
+      .site-brand-name {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+      }
+
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 1.5rem 1.25rem 3rem;
+      }
+
+      .sub {
+        margin: 0 0 1.5rem;
+        font-size: 0.9375rem;
+        font-weight: 400;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .card {
+        background: var(--klarna-white);
+        border-radius: var(--radius-card);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        padding: 2rem 1.75rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .card h2 {
+        margin: 0 0 1.25rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        color: var(--klarna-black);
+      }
+
+      .field {
+        margin-bottom: 1.125rem;
+      }
+
+      .field:last-of-type {
+        margin-bottom: 0;
+      }
+
+      input[type="text"],
+      input[type="url"] {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 0.9375rem;
+        font-family: inherit;
+        font-weight: 400;
+        color: var(--klarna-black);
+        background: var(--klarna-white);
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .field-linkedin-hero {
+        margin-bottom: 1.5rem;
+      }
+
+      .field-linkedin-hero label {
+        font-size: 0.9375rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .field-linkedin-hero input[type="url"] {
+        padding: 1.05rem 1.15rem;
+        font-size: 1.0625rem;
+        border-radius: 14px;
+        border-width: 1px;
+      }
+
+      .field-linkedin-hero .help {
+        margin: 0.5rem 0 0;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .manual-fallback {
+        display: none;
+        margin-bottom: 1.25rem;
+        padding: 1.25rem;
+        background: var(--klarna-off-white);
+        border-radius: 14px;
+        border: 1px solid var(--border);
+      }
+
+      .manual-fallback.visible {
+        display: block;
+      }
+
+      .manual-fallback h3 {
+        margin: 0 0 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--klarna-black);
+      }
+
+      .manual-fallback p.hint-fallback {
+        margin: 0 0 1rem;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--klarna-pink);
+        box-shadow: 0 0 0 3px rgba(255, 179, 199, 0.45);
+      }
+
+      .optional {
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .checks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem 1.5rem;
+        margin-top: 0.35rem;
+      }
+
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: var(--klarna-black);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .check input {
+        width: 1.05rem;
+        height: 1.05rem;
+        accent-color: var(--klarna-black);
+      }
+
+      .btn-primary {
+        width: 100%;
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        font-family: inherit;
+        color: var(--klarna-black);
+        background: var(--klarna-pink);
+        border: none;
+        border-radius: 40px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.05s;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--klarna-pink-hover);
+      }
+
+      .btn-primary:active:not(:disabled) {
+        transform: scale(0.995);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .keys-note {
+        margin-top: 1.25rem;
+        padding: 1rem;
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--muted);
+        background: var(--klarna-off-white);
+        border-radius: 12px;
+        border: 1px dashed var(--border);
+        line-height: 1.5;
+      }
+
+      .keys-note strong {
+        font-weight: 700;
+        color: var(--klarna-black);
+      }
+
+      .keys-note code {
+        font-size: 0.6875rem;
+        word-break: break-all;
+        color: var(--klarna-black);
+      }
+
+      .results {
+        display: none;
+      }
+
+      .results.visible {
+        display: block;
+      }
+
+      .result-name {
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--klarna-black);
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.02em;
+      }
+
+      .result-company {
+        margin: 0 0 1.25rem;
+        color: var(--muted);
+        font-size: 0.9375rem;
+        font-weight: 400;
+      }
+
+      .email-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+        margin-bottom: 0.875rem;
+      }
+
+      .email-value {
+        font-size: 1.0625rem;
+        font-weight: 700;
+        color: var(--klarna-black);
+        word-break: break-all;
+      }
+
+      .email-value.muted {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .badge-conf {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.55rem;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--klarna-white);
+      }
+
+      .badge-conf.high {
+        background: var(--conf-green);
+      }
+
+      .badge-conf.mid {
+        background: var(--conf-amber);
+        color: var(--klarna-black);
+      }
+
+      .badge-conf.low {
+        background: var(--conf-red);
+      }
+
+      .source-line {
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: var(--muted);
+        margin-bottom: 1.125rem;
+        line-height: 1.45;
+      }
+
+      .lookup-hints {
+        display: none;
+        margin: 0 0 1rem;
+        padding: 1rem;
+        background: var(--klarna-off-white);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .lookup-hints.visible {
+        display: block;
+      }
+
+      .lookup-hints strong {
+        color: var(--klarna-black);
+        font-weight: 700;
+      }
+
+      .lookup-hints ul {
+        margin: 0.5rem 0 0;
+        padding-left: 1.15rem;
+      }
+
+      .lookup-hints a {
+        color: var(--klarna-black);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .li-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 1.125rem;
+        padding: 0.85rem 1rem;
+        background: var(--klarna-off-white);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+
+      .li-url {
+        flex: 1;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        word-break: break-all;
+        color: var(--klarna-black);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
+        padding: 0.4rem 0.65rem;
+        border: 1px solid var(--border);
+        background: var(--klarna-white);
+        border-radius: 40px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: 600;
+        font-family: inherit;
+        color: var(--klarna-black);
+        transition: background 0.15s, border-color 0.15s;
+      }
+
+      .btn-icon .btn-icon-label {
+        line-height: 1;
+      }
+
+      .btn-icon:hover {
+        background: var(--klarna-pink);
+        border-color: transparent;
+      }
+
+      .signals {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .pill {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: var(--klarna-pink);
+        color: var(--klarna-black);
+      }
+
+      .pill.blue,
+      .pill.green {
+        background: var(--klarna-pink);
+        color: var(--klarna-black);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+
+      .btn-secondary {
+        padding: 0.75rem 0.85rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        font-family: inherit;
+        border-radius: 40px;
+        border: 1px solid var(--border);
+        background: var(--klarna-white);
+        color: var(--klarna-black);
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+      }
+
+      .btn-secondary:hover {
+        background: var(--klarna-off-white);
+        border-color: rgba(11, 5, 29, 0.12);
+      }
+
+      .btn-secondary.copied {
+        border-color: var(--conf-green);
+        background: rgba(0, 166, 126, 0.08);
+        color: var(--conf-green);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+        font-weight: 400;
+      }
+
+      .loading.visible {
+        display: block;
+      }
+
+      .spinner {
+        width: 36px;
+        height: 36px;
+        margin: 0 auto 0.875rem;
+        border: 3px solid rgba(11, 5, 29, 0.08);
+        border-top-color: var(--klarna-pink);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .err {
+        display: none;
+        margin-top: 1rem;
+        padding: 0.9rem 1rem;
+        background: rgba(226, 0, 26, 0.06);
+        border: 1px solid rgba(226, 0, 26, 0.25);
+        border-radius: 12px;
+        color: var(--conf-red);
+        font-size: 0.8125rem;
+        font-weight: 400;
+      }
+
+      .err.visible {
+        display: block;
+      }
+
+      @media (min-width: 480px) {
+        .wrap {
+          padding-top: 2rem;
+        }
+
+        .card {
+          padding: 2.25rem 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <img
+          src="https://cdn.klarna.com/1.0/shared/image/generic/logo/en_us/basic/logo_black.png"
+          height="32"
+          alt="Klarna"
+        />
+        <span class="site-brand-name">Lead Capture</span>
+      </div>
+    </header>
+    <div class="wrap">
+      <p class="sub">
+        Paste a LinkedIn profile URL — we pull name and company from the page title, then run Hunter.io and
+        LeadIQ in parallel.
+      </p>
+
+      <div class="card">
+        <h2>Profile</h2>
+        <form id="form" novalidate>
+          <div class="field field-linkedin-hero">
+            <label for="linkedin">LinkedIn profile URL</label>
+            <input
+              type="url"
+              id="linkedin"
+              name="linkedin"
+              autocomplete="url"
+              placeholder="https://www.linkedin.com/in/username"
+            />
+            <p class="help">Required. Open any profile, copy the URL from the address bar, and paste it here.</p>
+          </div>
+
+          <div class="manual-fallback" id="manualFallback" aria-hidden="true">
+            <h3>Enter details manually</h3>
+            <p class="hint-fallback" id="fallbackHint">
+              We couldn’t read name and company from LinkedIn. Fill in the fields below and click
+              <strong>Find Contact Info</strong> again.
+            </p>
+            <div class="field">
+              <label for="firstName">First name <span class="optional">(fallback)</span></label>
+              <input type="text" id="firstName" name="firstName" autocomplete="given-name" />
+            </div>
+            <div class="field">
+              <label for="lastName">Last name <span class="optional">(fallback)</span></label>
+              <input type="text" id="lastName" name="lastName" autocomplete="family-name" />
+            </div>
+            <div class="field">
+              <label for="company">Company name <span class="optional">(fallback)</span></label>
+              <input type="text" id="company" name="company" autocomplete="organization" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Signals <span class="optional">(optional)</span></label>
+            <div class="checks">
+              <label class="check">
+                <input type="checkbox" id="sigNewRole" />
+                New role
+              </label>
+              <label class="check">
+                <input type="checkbox" id="sigPromoted" />
+                Recently promoted
+              </label>
+              <label class="check">
+                <input type="checkbox" id="sigOpen" />
+                Open to work
+              </label>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" id="submitBtn">Find Contact Info</button>
+        </form>
+        <div class="keys-note">
+          <strong>Netlify backend</strong> — Hunter.io and LeadIQ are called from <code>/api/enrich</code> (Netlify
+          Function). Add environment variables <code>HUNTER_API_KEY</code> and optional <code>LEADIQ_API_KEY</code> in
+          the Netlify UI (never put secrets in this HTML file). Open this page from your deployed site URL so
+          <code>/api/enrich</code> is same-origin. LinkedIn profile HTML is still loaded in the browser via public CORS
+          relays (<code>corsproxy.io</code> / <code>api.allorigins.win</code>); use the grey <strong>manual</strong>
+          fields when that fails.
+        </div>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner" aria-hidden="true"></div>
+        <div>Loading LinkedIn profile, then Hunter &amp; LeadIQ…</div>
+      </div>
+
+      <div class="err" id="formError" role="alert"></div>
+
+      <div class="card results" id="results" aria-live="polite">
+        <h2>Result</h2>
+        <p class="result-name" id="outName">—</p>
+        <p class="result-company" id="outCompany">—</p>
+        <div class="email-row">
+          <span class="email-value" id="outEmail">—</span>
+          <span class="badge-conf" id="outBadge" style="display: none"></span>
+        </div>
+        <p class="source-line" id="outSource"></p>
+        <div class="lookup-hints" id="lookupHints" role="status"></div>
+        <div class="li-row" id="liBlock" style="display: none">
+          <a class="li-url" id="outLiHref" href="#" target="_blank" rel="noopener noreferrer"></a>
+          <button type="button" class="btn-icon" id="copyLiBtn" title="Copy LinkedIn URL" aria-label="Copy LinkedIn URL">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            <span class="btn-icon-label">Copy</span>
+          </button>
+        </div>
+        <div class="signals" id="outSignals"></div>
+        <div class="actions">
+          <button type="button" class="btn-secondary" id="copyAllBtn">Copy all</button>
+          <button type="button" class="btn-secondary" id="outreachBtn">Send to Outreach</button>
+        </div>
+      </div>
+    </div>
+    <script>
+(function () {
+        /** Same-origin when this file is served from your Netlify site. Hunter/LeadIQ keys live in Netlify env vars only. */
+        const ENRICH_API = "/api/enrich";
+
+        /**
+         * LinkedIn profile HTML only (browser → public CORS relays). Hunter + LeadIQ use POST /api/enrich (serverless).
+         * corsproxy.io documents multiple URL shapes; try both before giving up.
+         * @see https://corsproxy.io/docs/getting-started/
+         */
+        function corsProxyRelayUrls(absoluteUrl) {
+          var enc = encodeURIComponent(absoluteUrl);
+          var urls = ["https://corsproxy.io/?url=" + enc, "https://corsproxy.io/?" + enc];
+          if (/^https:\/\//i.test(absoluteUrl) && absoluteUrl.indexOf("?") === -1) {
+            urls.push("https://corsproxy.io/" + absoluteUrl);
+          }
+          return urls;
+        }
+
+        /** GET-only fallback when corsproxy rejects file:// (Origin null) or is unreachable. */
+        function allOriginsRawRelayUrl(absoluteUrl) {
+          return "https://api.allorigins.win/raw?url=" + encodeURIComponent(absoluteUrl);
+        }
+
+        function isRelayNoiseBody(trimmed) {
+          if (!trimmed || trimmed.length > 4096) return false;
+          if (/^[\[{]/.test(trimmed)) return false;
+          return /timeout|oops\.{3}|request timed out|524|502|503|504|bad gateway|rate.?limit|too many requests|unavailable/i.test(
+            trimmed
+          );
+        }
+
+        /** GET HTML (LinkedIn): same relay chain; skip bodies that look like proxy errors. */
+        async function fetchGetHtmlWithRelayFallback(profileUrl) {
+          var opts = {
+            method: "GET",
+            mode: "cors",
+            credentials: "omit",
+            cache: "no-store",
+            referrerPolicy: "no-referrer",
+            headers: { Accept: "text/html,application/xhtml+xml" },
+          };
+          var urls = corsProxyRelayUrls(profileUrl).concat([allOriginsRawRelayUrl(profileUrl)]);
+          var lastErr = "";
+          for (var i = 0; i < urls.length; i++) {
+            try {
+              var res = await fetch(urls[i], opts);
+              var text = await res.text().catch(function () {
+                return "";
+              });
+              var t = text.trim();
+              if (isRelayNoiseBody(t)) {
+                lastErr = "relay error body";
+                continue;
+              }
+              if (!res.ok) {
+                lastErr = "HTTP " + res.status;
+                continue;
+              }
+              if (!t || t.length < 200) {
+                lastErr = "short or empty body";
+                continue;
+              }
+              return { ok: true, status: res.status, text: text };
+            } catch (err) {
+              lastErr = err.message || "fetch";
+            }
+          }
+          return { ok: false, status: 0, text: "", error: lastErr };
+        }
+
+        function normalizeLinkedInProfileUrl(raw) {
+          var u = (raw || "").trim();
+          if (!u) return null;
+          if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+          try {
+            var url = new URL(u);
+            var host = url.hostname.toLowerCase();
+            if (!(host === "linkedin.com" || host.endsWith(".linkedin.com"))) {
+              return null;
+            }
+            if (!/\/in\//i.test(url.pathname)) {
+              return null;
+            }
+            url.hash = "";
+            url.search = "";
+            var path = url.pathname.replace(/\/+$/, "");
+            return url.origin + path;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function extractLinkedInStringsFromHtml(html) {
+          var doc = new DOMParser().parseFromString(html, "text/html");
+          var title = (doc.querySelector("title") && doc.querySelector("title").textContent) || "";
+          var ogEl = doc.querySelector('meta[property="og:title"]');
+          var ogTitle = ogEl ? ogEl.getAttribute("content") || "" : "";
+          title = title.replace(/\s+/g, " ").trim();
+          ogTitle = ogTitle.replace(/\s+/g, " ").trim();
+          return { title: title, ogTitle: ogTitle };
+        }
+
+        /** Typical formats: "Name - Job Title at Company | LinkedIn", en-dash, or "Name | Title at Company | LinkedIn" */
+        function parseLinkedInTitleLine(raw) {
+          if (!raw) return null;
+          var s = raw.replace(/\s+/g, " ").trim();
+          s = s.replace(/\s*\|\s*LinkedIn\s*$/i, "").trim();
+          s = s.replace(/\s*\bon\s+LinkedIn\s*$/i, "").trim();
+          s = s.replace(/[\u2013\u2014]/g, "-");
+
+          if (!s || /^linked(in|\s|$)/i.test(s)) return null;
+
+          var dashIdx = s.indexOf(" - ");
+          if (dashIdx === -1) {
+            var pipeBits = s.split(/\s*\|\s*/).map(function (x) {
+              return x.trim();
+            }).filter(Boolean);
+            if (pipeBits.length >= 2) {
+              var namePartP = pipeBits[0];
+              var restP = pipeBits.slice(1).join(" ");
+              var atP = /^(.+?)\s+at\s+(.+)$/i.exec(restP);
+              var beiP = !atP && /^(.+?)\s+bei\s+(.+)$/i.exec(restP);
+              var jobP = "";
+              var compP = "";
+              if (atP) {
+                jobP = atP[1].trim();
+                compP = atP[2].trim();
+              } else if (beiP) {
+                jobP = beiP[1].trim();
+                compP = beiP[2].trim();
+              } else {
+                jobP = restP;
+              }
+              var partsP = splitNameParts(namePartP);
+              if (partsP && partsP.lastName) {
+                return {
+                  firstName: partsP.firstName,
+                  lastName: partsP.lastName,
+                  fullName: namePartP,
+                  jobTitle: jobP,
+                  company: compP,
+                };
+              }
+            }
+            var lone = splitNameParts(s);
+            if (!lone || !lone.lastName) return null;
+            return {
+              firstName: lone.firstName,
+              lastName: lone.lastName,
+              fullName: s,
+              jobTitle: "",
+              company: "",
+            };
+          }
+
+          var namePart = s.slice(0, dashIdx).trim();
+          var rest = s.slice(dashIdx + 3).trim();
+          if (!namePart) return null;
+
+          var atMatch = /^(.+?)\s+at\s+(.+)$/i.exec(rest);
+          var beiMatch = !atMatch && /^(.+?)\s+bei\s+(.+)$/i.exec(rest);
+          var jobTitle = "";
+          var company = "";
+          if (atMatch) {
+            jobTitle = atMatch[1].trim();
+            company = atMatch[2].trim();
+          } else if (beiMatch) {
+            jobTitle = beiMatch[1].trim();
+            company = beiMatch[2].trim();
+          } else {
+            jobTitle = rest;
+          }
+
+          var parts = splitNameParts(namePart);
+          if (!parts || !parts.lastName) return null;
+
+          return {
+            firstName: parts.firstName,
+            lastName: parts.lastName,
+            fullName: namePart,
+            jobTitle: jobTitle,
+            company: company,
+          };
+        }
+
+        function splitNameParts(fullName) {
+          var tokens = fullName.split(/\s+/).filter(Boolean);
+          if (!tokens.length) return null;
+          if (tokens.length === 1) return null;
+          return {
+            firstName: tokens[0],
+            lastName: tokens.slice(1).join(" "),
+          };
+        }
+
+        function pickBestParsedProfile(strings) {
+          var candidates = [strings.ogTitle, strings.title];
+          var bestIncomplete = null;
+          for (var i = 0; i < candidates.length; i++) {
+            var p = parseLinkedInTitleLine(candidates[i]);
+            if (!p) continue;
+            if (p.company && p.firstName && p.lastName) return p;
+            if (!bestIncomplete && p.firstName && p.lastName) bestIncomplete = p;
+          }
+          return bestIncomplete;
+        }
+
+        async function fetchLinkedInProfileForParsing(profileUrl) {
+          var out = await fetchGetHtmlWithRelayFallback(profileUrl);
+          if (!out.ok) {
+            throw new Error(
+              "LinkedIn via relays failed (" + (out.error || "unknown") + ") — try manual fields or another network"
+            );
+          }
+          if (!out.text || out.text.length < 200) {
+            throw new Error("Empty or blocked response — try signing in via browser first or use manual fields");
+          }
+          return out.text;
+        }
+
+        var FALLBACK_HINT_DEFAULT =
+          "We couldn't read name and company from LinkedIn. Fill in the fields below and click Find Contact Info again.";
+
+        function showManualFallback(show, customHint) {
+          var box = $("manualFallback");
+          box.classList.toggle("visible", show);
+          box.setAttribute("aria-hidden", show ? "false" : "true");
+          if (show) {
+            $("fallbackHint").textContent = customHint || FALLBACK_HINT_DEFAULT;
+          }
+        }
+
+        function hasCompleteManualFallback() {
+          return (
+            $("firstName").value.trim() &&
+            $("lastName").value.trim() &&
+            $("company").value.trim()
+          );
+        }
+
+        const $ = (id) => document.getElementById(id);
+
+        function escapeHtml(str) {
+          return String(str || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function normConf(v) {
+          if (v == null || v === "") return null;
+          const n = Number(v);
+          if (Number.isNaN(n)) return null;
+          return Math.round(Math.max(0, Math.min(100, n)));
+        }
+
+        function tier(pct) {
+          if (pct == null) return null;
+          if (pct > 80) return "high";
+          if (pct >= 50) return "mid";
+          return "low";
+        }
+
+        function normalizeEnrichProvider(obj, source) {
+          var o = obj || {};
+          return {
+            email: o.email || "",
+            confidence: o.confidence != null ? normConf(o.confidence) : null,
+            source: source,
+            error: o.error || "",
+          };
+        }
+
+        async function runEnrichFromBackend(firstName, lastName, companyName, linkedinUrl) {
+          var emptyH = { email: "", confidence: null, source: "hunter", error: "" };
+          var emptyL = { email: "", confidence: null, source: "leadiq", error: "" };
+          try {
+            var res = await fetch(ENRICH_API, {
+              method: "POST",
+              mode: "cors",
+              credentials: "omit",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                firstName: firstName,
+                lastName: lastName,
+                companyName: companyName,
+                linkedinUrl: linkedinUrl || "",
+              }),
+            });
+            var text = await res.text().catch(function () {
+              return "";
+            });
+            var data;
+            try {
+              data = JSON.parse(text);
+            } catch (e1) {
+              return {
+                hunter: { ...emptyH, error: "Non-JSON from /api/enrich (HTTP " + res.status + ")" },
+                leadiq: { ...emptyL, error: "Non-JSON from /api/enrich" },
+              };
+            }
+            if (!res.ok) {
+              var msg = data.error || data.message || "HTTP " + res.status;
+              return {
+                hunter: { ...emptyH, error: msg },
+                leadiq: { ...emptyL, error: msg },
+              };
+            }
+            return {
+              hunter: normalizeEnrichProvider(data.hunter, "hunter"),
+              leadiq: normalizeEnrichProvider(data.leadiq, "leadiq"),
+            };
+          } catch (e2) {
+            return {
+              hunter: {
+                ...emptyH,
+                error:
+                  (e2.message || "Failed to reach /api/enrich") +
+                  " — open this page from your Netlify URL (not file://).",
+              },
+              leadiq: { ...emptyL, error: e2.message || "Failed to reach /api/enrich" },
+            };
+          }
+        }
+
+        function pickBest(h, l) {
+          const list = [];
+          if (h.email) list.push({ ...h, sort: h.confidence ?? -1 });
+          if (l.email) list.push({ ...l, sort: l.confidence ?? -1 });
+          if (!list.length) return null;
+          list.sort((a, b) => {
+            if (b.sort !== a.sort) return b.sort - a.sort;
+            if (a.source === "hunter") return -1;
+            if (b.source === "hunter") return 1;
+            return 0;
+          });
+          const w = list[0];
+          return {
+            email: w.email,
+            confidence: w.confidence,
+            source: w.source,
+          };
+        }
+
+        let lastState = null;
+
+        function showError(msg) {
+          const el = $("formError");
+          el.textContent = msg;
+          el.classList.toggle("visible", !!msg);
+        }
+
+        function renderResults(state) {
+          lastState = state;
+          const r = $("results");
+          r.classList.add("visible");
+
+          $("outName").textContent = state.fullName;
+          $("outCompany").textContent = state.companyName;
+
+          const emailEl = $("outEmail");
+          const badge = $("outBadge");
+          if (state.best && state.best.email) {
+            emailEl.textContent = state.best.email;
+            emailEl.classList.remove("muted");
+            const t = tier(state.best.confidence);
+            if (t && state.best.confidence != null) {
+              badge.style.display = "inline-flex";
+              badge.textContent = state.best.confidence + "%";
+              badge.className = "badge-conf " + (t === "high" ? "high" : t === "mid" ? "mid" : "low");
+            } else {
+              badge.style.display = "none";
+            }
+          } else {
+            emailEl.textContent = "No email found";
+            emailEl.classList.add("muted");
+            badge.style.display = "none";
+          }
+
+          const srcParts = [];
+          if (state.best && state.best.source) {
+            srcParts.push("Best match: <strong>" + (state.best.source === "hunter" ? "Hunter.io" : "LeadIQ") + "</strong>");
+          }
+          if (state.hunter.error && !state.hunter.email) {
+            srcParts.push("Hunter: " + state.hunter.error);
+          }
+          if (state.leadiq.error && !state.leadiq.email) {
+            srcParts.push("LeadIQ: " + state.leadiq.error);
+          }
+          $("outSource").innerHTML = srcParts.join(" · ") || "—";
+
+          var hints = $("lookupHints");
+          if (!state.best || !state.best.email) {
+            hints.classList.add("visible");
+            var parts = [];
+            parts.push("<strong>Why there may be no email</strong><ul>");
+            if (!state.companyName || !String(state.companyName).trim()) {
+              parts.push(
+                "<li><strong>Missing company</strong> — Hunter needs a company to find a domain. Fill first name, last name, and company in the grey section above, then run again.</li>"
+              );
+            }
+            if (state.hunter && state.hunter.error) {
+              parts.push("<li><strong>Hunter.io:</strong> " + escapeHtml(state.hunter.error) + "</li>");
+            }
+            if (state.leadiq && state.leadiq.error) {
+              parts.push("<li><strong>LeadIQ:</strong> " + escapeHtml(state.leadiq.error) + "</li>");
+            }
+            parts.push(
+              "<li><strong>Backend</strong> — Email lookup uses your Netlify function <code>/api/enrich</code>. If you opened this file from disk, deploy to Netlify and use the live site URL.</li>"
+            );
+            parts.push(
+              "<li><strong>LinkedIn relay</strong> — Profile HTML may still use public CORS relays; timeouts happen — retry or use manual fields.</li>"
+            );
+            parts.push(
+              "<li><strong>Keys &amp; quotas</strong> — Confirm your Hunter key and LeadIQ token in their dashboards; expired or over-quota keys return empty results.</li>"
+            );
+            parts.push("</ul>");
+            hints.innerHTML = parts.join("");
+          } else {
+            hints.classList.remove("visible");
+            hints.innerHTML = "";
+          }
+
+          const li = state.linkedinUrl && state.linkedinUrl.trim();
+          const liBlock = $("liBlock");
+          if (li) {
+            liBlock.style.display = "flex";
+            $("outLiHref").href = li;
+            $("outLiHref").textContent = li;
+          } else {
+            liBlock.style.display = "none";
+          }
+
+          const sigBox = $("outSignals");
+          sigBox.innerHTML = "";
+          const map = [
+            { on: state.signals.newRole, label: "New role", cls: "green" },
+            { on: state.signals.promoted, label: "Recently promoted", cls: "green" },
+            { on: state.signals.open, label: "Open to work", cls: "blue" },
+          ];
+          map.forEach((s) => {
+            if (!s.on) return;
+            const sp = document.createElement("span");
+            sp.className = "pill " + s.cls;
+            sp.textContent = s.label;
+            sigBox.appendChild(sp);
+          });
+        }
+
+        function buildCopyPayload(state) {
+          const lines = [
+            "Name: " + state.fullName,
+            "Company: " + state.companyName,
+            "Email: " + (state.best && state.best.email ? state.best.email : "Not found"),
+          ];
+          if (state.best && state.best.confidence != null)
+            lines.push("Confidence: " + state.best.confidence + "%");
+          if (state.best && state.best.source)
+            lines.push(
+              "Source: " + (state.best.source === "hunter" ? "Hunter.io" : "LeadIQ")
+            );
+          if (state.linkedinUrl) lines.push("LinkedIn: " + state.linkedinUrl);
+          if (state.jobTitle) lines.push("Title: " + state.jobTitle);
+          const sigs = [];
+          if (state.signals.newRole) sigs.push("New role");
+          if (state.signals.promoted) sigs.push("Recently promoted");
+          if (state.signals.open) sigs.push("Open to work");
+          if (sigs.length) lines.push("Signals: " + sigs.join(", "));
+          if (state.hunter.email && state.best && state.best.source !== "hunter") {
+            lines.push("Hunter (alternate): " + state.hunter.email);
+          }
+          if (state.leadiq.email && state.best && state.best.source !== "leadiq") {
+            lines.push("LeadIQ (alternate): " + state.leadiq.email);
+          }
+          return lines.join("\n");
+        }
+
+        $("form").addEventListener("submit", async function (e) {
+          e.preventDefault();
+          showError("");
+
+          var linkedinRaw = $("linkedin").value.trim();
+          var normalizedUrl = normalizeLinkedInProfileUrl(linkedinRaw);
+          if (!linkedinRaw || !normalizedUrl) {
+            showError(
+              "Please enter a valid LinkedIn profile URL (example: https://www.linkedin.com/in/username)."
+            );
+            return;
+          }
+
+          var prevNorm = $("linkedin").getAttribute("data-last-profile-url") || "";
+          if (normalizedUrl !== prevNorm) {
+            $("linkedin").setAttribute("data-last-profile-url", normalizedUrl);
+            showManualFallback(false);
+          }
+
+          var firstName = $("firstName").value.trim();
+          var lastName = $("lastName").value.trim();
+          var companyName = $("company").value.trim();
+          var jobTitle = "";
+
+          $("submitBtn").disabled = true;
+          $("loading").classList.add("visible");
+          $("results").classList.remove("visible");
+
+          var signals = {
+            newRole: $("sigNewRole").checked,
+            promoted: $("sigPromoted").checked,
+            open: $("sigOpen").checked,
+          };
+
+          var manualOpen = $("manualFallback").classList.contains("visible");
+
+          try {
+            if (manualOpen) {
+              if (!hasCompleteManualFallback()) {
+                showError(
+                  "Enter first name, last name, and company in the fallback section, then click Find Contact Info again."
+                );
+                return;
+              }
+              firstName = $("firstName").value.trim();
+              lastName = $("lastName").value.trim();
+              companyName = $("company").value.trim();
+            } else {
+              try {
+                var html = await fetchLinkedInProfileForParsing(normalizedUrl);
+                var strings = extractLinkedInStringsFromHtml(html);
+                var parsed = pickBestParsedProfile(strings);
+                if (parsed && parsed.firstName && parsed.lastName && parsed.company) {
+                  firstName = parsed.firstName;
+                  lastName = parsed.lastName;
+                  companyName = parsed.company;
+                  jobTitle = parsed.jobTitle || "";
+                  $("firstName").value = firstName;
+                  $("lastName").value = lastName;
+                  $("company").value = companyName;
+                  showManualFallback(false);
+                } else if (parsed && parsed.firstName && parsed.lastName) {
+                  $("firstName").value = parsed.firstName;
+                  $("lastName").value = parsed.lastName;
+                  $("company").value = parsed.company || "";
+                  jobTitle = parsed.jobTitle || "";
+                  showManualFallback(
+                    true,
+                    "We found the name but not the company (or LinkedIn blocked some details). Add the company below, then click Find Contact Info again."
+                  );
+                  showError("");
+                  return;
+                } else {
+                  showManualFallback(
+                    true,
+                    "Couldn't read “Name — Title at Company” from this page (login walls and locale formats can block scraping). Fill in below, then click Find Contact Info again."
+                  );
+                  showError("");
+                  return;
+                }
+              } catch (fetchErr) {
+                showManualFallback(
+                  true,
+                  "Could not load the profile through the proxy (" +
+                    (fetchErr.message || "unknown error") +
+                    "). Enter name and company manually below, then click Find Contact Info again."
+                );
+                showError("");
+                return;
+              }
+            }
+
+            var enrich = await runEnrichFromBackend(firstName, lastName, companyName, normalizedUrl);
+            var hunter = enrich.hunter;
+            var leadiq = enrich.leadiq;
+
+            var best = pickBest(hunter, leadiq);
+            var fullName = firstName + " " + lastName;
+
+            renderResults({
+              fullName: fullName,
+              companyName: companyName,
+              linkedinUrl: normalizedUrl,
+              jobTitle: jobTitle,
+              firstName: firstName,
+              lastName: lastName,
+              signals: signals,
+              hunter: hunter,
+              leadiq: leadiq,
+              best: best,
+            });
+          } catch (err) {
+            showError(err.message || "Something went wrong.");
+          } finally {
+            $("loading").classList.remove("visible");
+            $("submitBtn").disabled = false;
+          }
+        });
+
+        $("copyLiBtn").addEventListener("click", function () {
+          if (!lastState || !lastState.linkedinUrl) return;
+          navigator.clipboard.writeText(lastState.linkedinUrl).then(function () {
+            var b = $("copyLiBtn");
+            var label = b.querySelector(".btn-icon-label");
+            var t = label.textContent;
+            label.textContent = "Copied!";
+            setTimeout(function () {
+              label.textContent = t;
+            }, 1500);
+          });
+        });
+
+        $("copyAllBtn").addEventListener("click", function () {
+          if (!lastState) return;
+          var btn = $("copyAllBtn");
+          navigator.clipboard.writeText(buildCopyPayload(lastState)).then(function () {
+            btn.classList.add("copied");
+            var o = btn.textContent;
+            btn.textContent = "Copied!";
+            setTimeout(function () {
+              btn.textContent = o;
+              btn.classList.remove("copied");
+            }, 1800);
+          });
+        });
+
+        $("outreachBtn").addEventListener("click", function () {
+          if (!lastState) return;
+          var p = new URLSearchParams({
+            firstName: lastState.firstName || "",
+            lastName: lastState.lastName || "",
+            email: (lastState.best && lastState.best.email) || "",
+            title: lastState.jobTitle || "",
+            company: lastState.companyName || "",
+          });
+          window.open("https://app1a.outreach.io/prospects/new?" + p.toString(), "_blank", "noopener,noreferrer");
+        });
+})();
+
+    </script>
+  </body>
+</html>
