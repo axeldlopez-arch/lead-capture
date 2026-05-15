@@ -3,9 +3,6 @@
   functions = "netlify/functions"
   command = "npm install"
 
-[functions]
-  timeout = 26
-
 [[redirects]]
   from = "/api/enrich"
   to = "/.netlify/functions/enrich"
