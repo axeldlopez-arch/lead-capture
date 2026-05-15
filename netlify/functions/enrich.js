@@ -67,18 +67,19 @@ function normConf(value) {
 }
 
 /**
- * Netlify env values are sometimes pasted as `Bearer …`, with quotes, newlines, or BOM.
- * LeadIQ expects `Authorization: Bearer <raw token>` once — duplicate Bearer breaks auth (401).
+ * Netlify env values may include quotes, newlines, BOM, or a pasted `Basic ` / `Bearer ` prefix.
+ * LeadIQ GraphQL uses HTTP Basic: `Authorization: Basic <secret>` where `<secret>` is the
+ * Base64 credential from LeadIQ as-is (no extra encoding).
  */
-function sanitizeLeadIQBearerToken(raw) {
+function sanitizeLeadIQToken(raw) {
   let t = String(raw == null ? "" : raw).trim();
   t = t.replace(/^\uFEFF/, "");
   t = t.replace(/\r?\n/g, " ").replace(/\s+/g, " ").trim();
   if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
     t = t.slice(1, -1).trim();
   }
-  while (/^Bearer\s+/i.test(t)) {
-    t = t.replace(/^Bearer\s+/i, "").trim();
+  while (/^(Bearer|Basic)\s+/i.test(t)) {
+    t = t.replace(/^(Bearer|Basic)\s+/i, "").trim();
   }
   return t;
 }
@@ -206,12 +207,13 @@ function pickLeadIQEmail(person) {
   return { email: "", confidence: conf };
 }
 
-async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, bearerToken) {
+async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, leadiqSecret) {
   const empty = { email: "", confidence: null, source: "leadiq", error: "" };
-  if (!bearerToken || !String(bearerToken).trim()) {
+  if (!leadiqSecret || !String(leadiqSecret).trim()) {
     return {
       ...empty,
-      error: "LEADIQ_API_KEY is not set in Netlify (optional; add Bearer token as environment variable).",
+      error:
+        "LEADIQ_API_KEY is not set in Netlify (optional; add LeadIQ Secret Base64 API key as environment variable).",
     };
   }
   if (!firstName || !lastName) {
@@ -231,7 +233,7 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${bearerToken}`,
+        Authorization: `Basic ${leadiqSecret}`,
       },
       body: JSON.stringify({
         query: LEADIQ_SEARCH_PEOPLE,
@@ -250,7 +252,7 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
       let msg = extracted || `HTTP ${response.status}`;
       if (response.status === 401) {
         msg +=
-          " — LeadIQ rejected this token (401). In LeadIQ Developer / Public API settings, create a new API token, set Netlify env LEADIQ_API_KEY to the token only (no “Bearer ” prefix, no quotes, no line breaks), save, then trigger a new deploy so functions pick up the value.";
+          " — LeadIQ rejected this credential (401). Set Netlify env LEADIQ_API_KEY to the Secret Base64 API key from LeadIQ only (no “Basic ” prefix, no quotes, no line breaks), save, then redeploy so functions reload the value.";
       }
       return { ...empty, error: msg };
     }
@@ -313,9 +315,9 @@ exports.handler = async (event) => {
   }
 
   const hunterKey = (process.env.HUNTER_API_KEY || "").trim();
-  const leadiqKey = sanitizeLeadIQBearerToken(process.env.LEADIQ_API_KEY || "");
+  const leadiqKey = sanitizeLeadIQToken(process.env.LEADIQ_API_KEY || "");
   console.log(
-    "enrich: LeadIQ token after sanitize — present:",
+    "enrich: LeadIQ secret after sanitize — present:",
     !!leadiqKey,
     "length:",
     leadiqKey ? leadiqKey.length : 0
