@@ -960,6 +960,11 @@
             }
             if (state.leadiq && state.leadiq.error) {
               parts.push("<li><strong>LeadIQ:</strong> " + escapeHtml(state.leadiq.error) + "</li>");
+              if (/401|Unauthorized|could not be authenticated/i.test(state.leadiq.error)) {
+                parts.push(
+                  "<li><strong>LeadIQ 401</strong> — The value in Netlify <code>LEADIQ_API_KEY</code> is not accepted (wrong token, expired, or extra characters). Create a new token in the LeadIQ Public API / developer area, paste the token alone in Netlify, save, then redeploy the site so functions reload env vars.</li>"
+                );
+              }
             }
             parts.push(
               "<li><strong>Backend</strong> — Email lookup uses your Netlify function <code>/api/enrich</code>. Open this page from your deployed site URL (not <code>file://</code>).</li>"
