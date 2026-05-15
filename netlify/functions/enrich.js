@@ -4,6 +4,8 @@ const HUNTER_DOMAIN = "https://api.hunter.io/v2/domain-search";
 const HUNTER_FINDER = "https://api.hunter.io/v2/email-finder";
 const LEADIQ_GQL = "https://api.leadiq.com/graphql";
 
+const FETCH_TIMEOUT_MS = 8000;
+
 const LEADIQ_SEARCH_PEOPLE = `
   query SearchPeople($input: SearchPeopleInput!) {
     searchPeople(input: $input) {
@@ -36,6 +38,27 @@ function jsonResponse(statusCode, body) {
   };
 }
 
+/** Every outbound fetch uses AbortController so slow APIs fail fast (8s) instead of hanging. */
+async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const tid = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    const name = err && err.name;
+    const msg = (err && err.message) || String(err);
+    if (name === "AbortError" || msg.includes("aborted")) {
+      const e = new Error(`Request timed out after ${timeoutMs}ms`);
+      e.cause = err;
+      throw e;
+    }
+    console.log("[fetch] error:", msg);
+    throw err;
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
 function normConf(value) {
   if (value == null || value === "") return null;
   const n = Number(value);
@@ -64,8 +87,12 @@ function hunterErrorMessage(data) {
 async function hunterGet(baseUrl, params) {
   const u = new URL(baseUrl);
   Object.keys(params).forEach((k) => u.searchParams.set(k, String(params[k])));
-  const response = await fetch(u.toString());
-  const body = await response.json().catch(() => ({}));
+  const url = u.toString();
+  const response = await fetchWithTimeout(url, { method: "GET" });
+  const body = await response.json().catch((parseErr) => {
+    console.log("Hunter response JSON parse error:", parseErr.message || String(parseErr));
+    return {};
+  });
   return { response, body };
 }
 
@@ -81,11 +108,14 @@ async function lookupHunter(firstName, lastName, companyName, apiKey) {
     return { ...empty, error: "firstName, lastName, and companyName are required" };
   }
   try {
+    console.log("Starting Hunter domain search for: " + companyName);
     const ds = await hunterGet(HUNTER_DOMAIN, {
       company: companyName,
       limit: "1",
       api_key: apiKey,
     });
+    console.log("Hunter domain result: " + ds.response.status);
+
     const he1 = hunterErrorMessage(ds.body);
     if (he1) return { ...empty, error: he1 };
     if (!ds.response.ok) {
@@ -101,12 +131,15 @@ async function lookupHunter(firstName, lastName, companyName, apiKey) {
       return { ...empty, error: "No domain found for company" };
     }
 
+    console.log("Starting Hunter email finder");
     const ef = await hunterGet(HUNTER_FINDER, {
       domain,
       first_name: firstName,
       last_name: lastName,
       api_key: apiKey,
     });
+    console.log("Hunter email result: " + ef.response.status);
+
     const he2 = hunterErrorMessage(ef.body);
     if (he2) return { ...empty, error: he2 };
     if (!ef.response.ok) {
@@ -129,6 +162,7 @@ async function lookupHunter(firstName, lastName, companyName, apiKey) {
       error: "",
     };
   } catch (err) {
+    console.log("Hunter fetch failed:", err.message || String(err));
     return { ...empty, error: err.message || "Hunter lookup failed" };
   }
 }
@@ -172,7 +206,8 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
   if (linkedinUrl) input.linkedinUrl = linkedinUrl;
 
   try {
-    const response = await fetch(LEADIQ_GQL, {
+    console.log("Starting LeadIQ search");
+    const response = await fetchWithTimeout(LEADIQ_GQL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -183,7 +218,12 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
         variables: { input },
       }),
     });
-    const body = await response.json().catch(() => ({}));
+    console.log("LeadIQ result: " + response.status);
+
+    const body = await response.json().catch((parseErr) => {
+      console.log("LeadIQ response JSON parse error:", parseErr.message || String(parseErr));
+      return {};
+    });
 
     if (!response.ok) {
       let msg =
@@ -219,6 +259,7 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
       error: "",
     };
   } catch (err) {
+    console.log("LeadIQ fetch failed:", err.message || String(err));
     return { ...empty, error: err.message || "LeadIQ request failed" };
   }
 }
@@ -252,10 +293,12 @@ exports.handler = async (event) => {
   const hunterKey = (process.env.HUNTER_API_KEY || "").trim();
   const leadiqKey = sanitizeLeadIQBearerToken(process.env.LEADIQ_API_KEY || "");
 
-  const [hunter, leadiq] = await Promise.all([
-    lookupHunter(firstName, lastName, companyName, hunterKey),
-    lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, leadiqKey),
-  ]);
+  console.log("enrich: starting Hunter, then LeadIQ (sequential)");
+
+  const hunter = await lookupHunter(firstName, lastName, companyName, hunterKey);
+  const leadiq = await lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, leadiqKey);
+
+  console.log("enrich: finished — hunter error:", hunter.error || "(none)", "leadiq error:", leadiq.error || "(none)");
 
   return jsonResponse(200, { hunter, leadiq });
 };
