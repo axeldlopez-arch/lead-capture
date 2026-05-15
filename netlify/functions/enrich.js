@@ -284,6 +284,8 @@ async function lookupLeadIQ(firstName, lastName, companyName, linkedinUrl, beare
   }
 }
 
+exports.config = { timeout: 26 };
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: corsHeaders(), body: "" };
